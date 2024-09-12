@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+beautifulsoup4 = "4.12.3"
+streamlit = "1.38.0"
+PyPDF2 = "3.0.1"
+langchain = "0.2.16"
+langchain-community = "0.2.16"
+google-generativeai = "0.7.2"
+langchain-google-genai = "1.0.10"
+requests = "2.32.3"
+python-dotenv = "1.0.1"
+faiss-cpu = "1.8.0.post1"  
+altair= "5.4.1"
+pytesseract = "0.3.13"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
