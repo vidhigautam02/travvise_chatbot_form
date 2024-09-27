@@ -12,6 +12,9 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import faiss
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
 
 
 # Configure logging
@@ -264,6 +267,27 @@ def extract_relevant_information(question, text_chunks, metadata):
             relevant_info.append((chunk, meta))
     
     return relevant_info
+def authenticate_gdrive():
+    creds = service_account.Credentials.from_service_account_file(
+        'credentials.json'  # Ensure this file is in your root directory
+    )
+    drive_service = build('drive', 'v3', credentials=creds)
+    sheets_service = build('sheets', 'v4', credentials=creds)
+    return drive_service, sheets_service
+
+# Function to append data to Google Sheets
+def append_data_to_sheets(sheets_service, data):
+    SPREADSHEET_ID = '15PV9KT2_9ksaz2znCAkbak3A0Q2BrWLJ6DkYi869Hh0'  # Updated Spreadsheet ID
+    range_name = 'Sheet1!A1'  # Change as needed
+    body = {
+        'values': [data]
+    }
+    sheets_service.spreadsheets().values().append(
+        spreadsheetId=SPREADSHEET_ID,
+        range=range_name,
+        valueInputOption='RAW',
+        body=body
+    ).execute()
 
 def query(question, chat_history):
     """
@@ -294,6 +318,7 @@ def query(question, chat_history):
 
         # Generate a response using the reframed information
         formatted_answer = generate_natural_language_response(relevant_info, question) if relevant_info else "I couldn't find a specific answer. Could you please provide more details or ask a different question?"
+        
 
         return {"answer": formatted_answer}
 
@@ -303,14 +328,20 @@ def query(question, chat_history):
     except Exception as e:
         logging.error(f"Error during query: {e}")
         return {"answer": "Oops, something went wrong while processing your query. Please try again later."}
+    
 
-def show_ui():
+
+st.set_page_config(page_title="Our Company", page_icon=":robot_face:")
+
+# Load your company logo
+company_logo_url = "https://www.travvise.com/images/logo.svg"
+
+# Function to display the chatbot interface
+def display_chat():
     """
-    Sets up the Streamlit UI for the Analytx4T Personal Chatbot.
+    Sets up the Streamlit UI for the Travvise Travel Solutions Chatbot.
     """
-    st.title("Analytx4T Personal Chatbot")
-    st.image("https://www.travvise.com/images/logo.svg", width=300)  # Analytx4T logo
-    st.write("Hello! I am your Analytx4T Personal Chatbot. How can I assist you today?")
+    st.write("Hello! I am your Travvise Virtual Assistant. How can I assist you with your travel technology needs today?")
 
     # Initialize session state for chat history and messages
     if 'messages' not in st.session_state:
@@ -345,14 +376,75 @@ def show_ui():
         except Exception as e:
             st.error(f"An error occurred while processing the query: {str(e)}")
 
-    # Add a "Restart Chat" button below the output area and above the input area
-    if st.button("Restart Chat"):
-        # Reset the chat state
-        st.session_state.messages = []
-        st.session_state.chat_history = []
-         
+    # Show the buttons if there are messages in the chat
+    if st.session_state.messages:
+        col1, col2 = st.columns([1, 1])  # Two equal columns for the buttons
 
+        with col1:
+            if st.button("Start New Conversation"):
+                # Reset the chat state
+                st.session_state.messages = []
+                st.session_state.chat_history = []
 
+        with col2:
+            if st.button("Book a Demo"):
+                # Trigger demo form in main UI
+                st.session_state["show_demo_form"] = True
+                st.session_state["demo_submitted"] = False  # Reset demo submission
+
+# Function to display the demo form
+def display_demo_form():
+    col1, col2, col3 = st.columns([1, 0.5, 1])  # Adjust column ratios for desired spacing
+    with col1:
+        st.markdown("<h3 style='font-weight:bold; font-size: 24px; display:inline;'>Request a Demo</h3>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("<h3 style='font-weight:bold; font-size: 26px; display:inline;'>OR</h3>", unsafe_allow_html=True)
+    with col3:
+        if st.button("Skip Demo", key="skip_demo"):
+            st.session_state["demo_submitted"] = True  # Mark demo as submitted
+            st.session_state["show_demo_form"] = False  # Hide the form when skipping
+    st.write("Fill out the form below to request a demo of our product:")
+
+    with st.form(key="demo_form"):
+        name = st.text_input("Name", placeholder="Enter your name", max_chars=50)
+        email = st.text_input("Email", placeholder="Enter your email", max_chars=50)
+        phone = st.text_input("Phone Number", placeholder="Enter your phone number", max_chars=15)
+        submit_button = st.form_submit_button(label="Submit")
+        if submit_button:
+            # Show success message and open chat without resetting it like the skip button
+            st.session_state["demo_submitted"] = True
+            st.session_state["show_demo_form"] = False  # Hide the form but don't reset the chat history here
+            data = [name, email, phone]  # Collect form data
+            drive_service, sheets_service = authenticate_gdrive()
+            append_data_to_sheets(sheets_service, data)  # Append data to Google Sheets
+            st.success("Data submitted successfully!")
+
+# Skip demo and go to chat directly
+def skip_demo():
+    st.session_state["demo_submitted"] = True
+    st.session_state["show_demo_form"] = False
+    st.session_state["messages"] = []  # Reset chat messages
+    st.session_state["chat_history"] = []  # Reset chat history
+
+# Function to show the UI components
+def show_ui():
+    st.image(company_logo_url, width=300)  # Company logo
+    st.title("Welcome to Our Product")  
+
+    # Initialize session state
+    if "demo_submitted" not in st.session_state:
+        st.session_state["demo_submitted"] = False
+    if "show_demo_form" not in st.session_state:
+        st.session_state["show_demo_form"] = True  # Initially show the demo form
+
+    if st.session_state["show_demo_form"]:
+         demo_submitted = display_demo_form()
+         if demo_submitted:
+            st.session_state["demo_submitted"] = True
+
+    # Show the chat interface after the demo is submitted or skipped
+    if st.session_state["demo_submitted"]:
+        display_chat()
 
 if __name__ == "__main__":
     website_url = "https://www.travvise.com/"  # Change to your desired website URL
