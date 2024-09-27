@@ -331,7 +331,7 @@ def query(question, chat_history):
     
 
 
-st.set_page_config(page_title="Our Company", page_icon=":robot_face:")
+st.set_page_config(page_title="Travvise", page_icon=":robot_face:")
 
 # Load your company logo
 company_logo_url = "https://www.travvise.com/images/logo.svg"
