@@ -416,7 +416,7 @@ def display_demo_form():
             st.session_state["show_demo_form"] = False  # Hide the form but don't reset the chat history here
             data = [name, email, phone]  # Collect form data
             drive_service, sheets_service = authenticate_gdrive()
-            append_data_to_sheets(sheets_service, data)  # Append data to Google Sheets
+            append_data_to_sheets(sheets_service, data)  # Append data to Google  Sheets
             st.success("Data submitted successfully!")
 
 # Skip demo and go to chat directly
