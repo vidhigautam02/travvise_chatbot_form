@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 load_dotenv()
 
 # Check if required environment variables are set
-if not os.getenv('GOOGLE_API_KEY'):
+if not st.secrets["google_api_key"]:
     raise ValueError("GOOGLE_API_KEY environment variable not set")
 
 
@@ -176,7 +176,7 @@ def upload_website_data(url):
     if chunks_with_sources:
         text_chunks, metadata = zip(*chunks_with_sources)
         print(f"Creating embeddings for {len(text_chunks)} chunks")
-        embeddings = GoogleGenerativeAIEmbeddings(api_key=os.getenv('GOOGLE_API_KEY'), model="models/text-embedding-004")
+        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api_key"], model="models/text-embedding-004")
         vector_store = FAISS.from_texts(text_chunks, embedding=embeddings, metadatas=metadata)
         vector_store.save_local("faiss_index")
         print("FAISS index created or updated successfully.")
@@ -188,7 +188,7 @@ def upload_website_data(url):
     
 def reframe_with_gemini(text,question):
     # Configure the API key from the environment variable
-    genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+    genai.configure(api_key=st.secrets["google_api_key"])
     
     # Set up the generation configuration
     generation_config = {
@@ -268,9 +268,23 @@ def extract_relevant_information(question, text_chunks, metadata):
     
     return relevant_info
 def authenticate_gdrive():
-    creds = service_account.Credentials.from_service_account_file(
-        'credentials.json'  # Ensure this file is in your root directory
-    )
+    gdrive_credentials = st.secrets["gdrive_credentials"]
+
+    # Extract values from the secrets
+    credentials_info = {
+        "type": "service_account",
+        "project_id": gdrive_credentials["GOOGLE_PROJECT_ID"],
+        "private_key_id": gdrive_credentials["GOOGLE_PRIVATE_KEY_ID"],
+        "private_key": gdrive_credentials["GOOGLE_PRIVATE_KEY"].replace("\\n", "\n"),  # Replace \n with actual new line
+        "client_email": gdrive_credentials["GOOGLE_CLIENT_EMAIL"],
+        "client_id": gdrive_credentials["GOOGLE_CLIENT_ID"],
+        "auth_uri": gdrive_credentials["GOOGLE_AUTH_URI"],
+        "token_uri": gdrive_credentials["GOOGLE_TOKEN_URI"],
+        "auth_provider_x509_cert_url": gdrive_credentials["GOOGLE_AUTH_PROVIDER_X509_CERT_URL"],
+        "client_x509_cert_url": gdrive_credentials["GOOGLE_CLIENT_X509_CERT_URL"],
+    }
+
+    creds = service_account.Credentials.from_service_account_info(credentials_info)
     drive_service = build('drive', 'v3', credentials=creds)
     sheets_service = build('sheets', 'v4', credentials=creds)
     return drive_service, sheets_service
@@ -295,7 +309,7 @@ def query(question, chat_history):
     """
     try:
         # Initialize embeddings and vector store
-        embeddings = GoogleGenerativeAIEmbeddings(api_key=os.getenv('GOOGLE_API_KEY'), model="models/text-embedding-004")
+        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api_key"], model="models/text-embedding-004")
         vector_store_path = "faiss_index"
         
         # Check if the FAISS index file exists
