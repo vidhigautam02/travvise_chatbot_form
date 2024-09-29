@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 load_dotenv()
 
 # Check if required environment variables are set
-if not st.secrets["google_api_key"]:
+if not st.secrets["google_api"]["google_api_key"]:
     raise ValueError("GOOGLE_API_KEY environment variable not set")
 
 
@@ -176,7 +176,7 @@ def upload_website_data(url):
     if chunks_with_sources:
         text_chunks, metadata = zip(*chunks_with_sources)
         print(f"Creating embeddings for {len(text_chunks)} chunks")
-        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api_key"], model="models/text-embedding-004")
+        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api"]["google_api_key"], model="models/text-embedding-004")
         vector_store = FAISS.from_texts(text_chunks, embedding=embeddings, metadatas=metadata)
         vector_store.save_local("faiss_index")
         print("FAISS index created or updated successfully.")
@@ -188,7 +188,7 @@ def upload_website_data(url):
     
 def reframe_with_gemini(text,question):
     # Configure the API key from the environment variable
-    genai.configure(api_key=st.secrets["google_api_key"])
+    genai.configure(api_key=st.secrets["google_api"]["google_api_key"])
     
     # Set up the generation configuration
     generation_config = {
@@ -309,7 +309,7 @@ def query(question, chat_history):
     """
     try:
         # Initialize embeddings and vector store
-        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api_key"], model="models/text-embedding-004")
+        embeddings = GoogleGenerativeAIEmbeddings(api_key=st.secrets["google_api"]["google_api_key"], model="models/text-embedding-004")
         vector_store_path = "faiss_index"
         
         # Check if the FAISS index file exists
