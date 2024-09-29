@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlparse
 import faiss
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from datetime import datetime
 
 
 
@@ -428,12 +429,13 @@ def display_demo_form():
         phone = st.text_input("Phone Number", placeholder="Enter your phone number", max_chars=15)
         demo_date = st.date_input("Preferred Demo Date")
         additional_comments = st.text_area("Additional Comments (optional)", placeholder="Any special requests or comments")
+        demo_date_str = demo_date.isoformat() 
         submit_button = st.form_submit_button(label="Submit")
         if submit_button:
             # Show success message and open chat without resetting it like the skip button
             st.session_state["demo_submitted"] = True
             st.session_state["show_demo_form"] = False  # Hide the form but don't reset the chat history here
-            data = [name, email, phone,demo_date,additional_comments]  # Collect form data
+            data = [name, email, phone,demo_date_str,additional_comments]  # Collect form data
             drive_service, sheets_service = authenticate_gdrive()
             append_data_to_sheets(sheets_service, data)  # Append data to Google  Sheets
             st.success("Data submitted successfully!")
