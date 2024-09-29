@@ -272,17 +272,20 @@ def authenticate_gdrive():
 
     # Extract values from the secrets
     credentials_info = {
-        "type": "service_account",
-        "project_id": gdrive_credentials["GOOGLE_PROJECT_ID"],
-        "private_key_id": gdrive_credentials["GOOGLE_PRIVATE_KEY_ID"],
-        "private_key": gdrive_credentials["GOOGLE_PRIVATE_KEY"].replace("\\n", "\n"),  # Replace \n with actual new line
-        "client_email": gdrive_credentials["GOOGLE_CLIENT_EMAIL"],
-        "client_id": gdrive_credentials["GOOGLE_CLIENT_ID"],
-        "auth_uri": gdrive_credentials["GOOGLE_AUTH_URI"],
-        "token_uri": gdrive_credentials["GOOGLE_TOKEN_URI"],
-        "auth_provider_x509_cert_url": gdrive_credentials["GOOGLE_AUTH_PROVIDER_X509_CERT_URL"],
-        "client_x509_cert_url": gdrive_credentials["GOOGLE_CLIENT_X509_CERT_URL"],
+        "type": gdrive_credentials["type"],
+        "project_id": gdrive_credentials["project_id"],
+        "private_key_id": gdrive_credentials["private_key_id"],
+        "private_key": gdrive_credentials["private_key"].replace("\\n", "\n"),  # Replace \n with actual new line
+        "client_email": gdrive_credentials["client_email"],
+        "client_id": gdrive_credentials["client_id"],
+        "auth_uri": gdrive_credentials["auth_uri"],
+        "token_uri": gdrive_credentials["token_uri"],
+        "auth_provider_x509_cert_url": gdrive_credentials["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": gdrive_credentials["client_x509_cert_url"],
     }
+
+    # Authenticate with Google Drive API using the credentials
+    credentials = service_account.Credentials.from_service_account_info(credentials_info)
 
     creds = service_account.Credentials.from_service_account_info(credentials_info)
     drive_service = build('drive', 'v3', credentials=creds)
